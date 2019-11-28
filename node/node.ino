@@ -12,38 +12,31 @@ DallasTemperature sensors(&oneWire);
 RF24 radio(9, 10); // CE/CSN pins
 RF24Network network(radio); 
 
-const uint16_t channel = 90;
+const uint16_t mChannel = 90;
 const uint16_t thisNode = 1;
 const uint16_t gatewayNode = 0;
 
 struct dataStruct{
-  uint16_t measurementTypeId;
-  uint16_t stationId;
+  uint16_t measurementTypeId = 4;
+  uint16_t stationId = 3;
+  char secretId[36] = "a0e1ef6f-affd-40f8-906c-604b1afa3529";
   float value;
 }data;
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("starting...");
+
+  Serial.println("Starting...");
 
   sensors.begin();
   restartRadio();
-  
-  data.value = 0.0;
-  data.stationId = 46;
-  data.measurementTypeId = 32;
-  
-  char sensorInfo[100];
-  sprintf(sensorInfo, "stationId = %i & measurementTypeId = %i", data.stationId, data.measurementTypeId);
-  Serial.print("Sensor config: ");
-  Serial.println(sensorInfo);
-  Serial.println("Starting measuring");
 
+  Serial.println("Starting measuring");
 }
 
 void loop() {
 
-  delay(10000);
+  delay(60000);
 
   sensors.requestTemperatures();
   data.value = sensors.getTempCByIndex(0);
@@ -63,10 +56,10 @@ void loop() {
 }
 
 void restartRadio() {
+  Serial.println("Restarting radio...");
   radio.begin(); // Start up the radio
-  network.begin(channel, thisNode);
+  network.begin(mChannel, thisNode);
   network.update(); // always be pumping the network
-  bool tmp = radio.isChipConnected();
   Serial.print("Is radio properly connected = ");
-  Serial.println(tmp);
+  Serial.println(radio.isChipConnected());
 }
