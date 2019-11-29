@@ -10,7 +10,7 @@ RF24 radio(D2, D8); // CE/CSN pins
 RF24Network network(radio);
 
 const uint16_t channel = 90;
-const uint16_t thisNode = 0; // Address of this node (the gateway node)
+const uint16_t thisNode = 0; // Address of this node (gateway node)
 
 const char* ssid = "Wifi nowa budowa";
 const char* password = "123456789a";
@@ -27,24 +27,29 @@ struct dataStruct{
  
 void setup() {
   Serial.begin(115200);
-  Serial.println("starting......");
+  Serial.println(" ");
+  Serial.println("Starting");
   
-  connectToWifi();
+  reconnectToWifi();
   
   restartRadio();
   
-  Serial.println("Listening for sensor values..."); 
+  Serial.println("Listening for sensor values"); 
 }
  
 void loop() {
   network.update();
   while (network.available()) {
-    Serial.println("Received radio connection ");
+    Serial.println("Received radio connection");
     yield();
     RF24NetworkHeader header;        
     network.read(header, &sensorData, sizeof(sensorData));
 
     yield();
+
+    if(WiFi.status() != WL_CONNECTED){
+        reconnectToWifi();
+    }
 
     HTTPClient http;
     String postData = "{\"value\":" + String(sensorData.value) + ",\"measurementTypeId\":" + String(sensorData.measurementTypeId) + ",\"stationId\":" + String(sensorData.stationId) + ",\"secretId\":\"" + String(sensorData.secretId) + "\"}";    
@@ -64,9 +69,9 @@ void loop() {
   }
 }
 
-void connectToWifi() {
+void reconnectToWifi() {
+  Serial.println("Reconnecting to wifi");
   WiFi.begin(ssid, password);
-  Serial.println(" ");
   Serial.print("Connecting");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -75,16 +80,16 @@ void connectToWifi() {
   Serial.println("");
   Serial.println("WiFi connected");  
   Serial.println("IP address: ");
-  Serial.print(WiFi.localIP());  
+  Serial.println(WiFi.localIP());  
   yield();
 }
 
 void restartRadio(){
-  Serial.println("Restarting radio...");
-  yield(); // give wifi functionality some time to do its operations
-  radio.begin(); // Start up the radio
+  Serial.println("Restarting radio");
+  yield(); // wait for wifi functionality
+  radio.begin();
   network.begin(channel, thisNode);
-  network.update(); // always be pumping the network
+  network.update();
   Serial.print("Is radio properly connected = ");
   Serial.println(radio.isChipConnected());
 }

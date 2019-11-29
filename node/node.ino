@@ -5,6 +5,7 @@
 #include <printf.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <LowPower.h>
 
 OneWire oneWire(6); // dallas pin
 DallasTemperature sensors(&oneWire);
@@ -25,25 +26,25 @@ struct dataStruct{
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Starting");
 
-  Serial.println("Starting...");
+  requestTemperature();
 
-  sensors.begin();
   restartRadio();
 
-  Serial.println("Starting measuring");
+  Serial.println("Starting measurements in 5 sec");
+  delay(5000);
 }
 
 void loop() {
 
-  delay(60000);
+  requestTemperature();
 
-  sensors.requestTemperatures();
-  data.value = sensors.getTempCByIndex(0);
-  
   Serial.print("Sending temperature: ");
   Serial.print(data.value); 
   Serial.println("C"); 
+
+  radio.powerUp();
 
   RF24NetworkHeader header(gatewayNode);
   bool ok = network.write(header, &data, sizeof(data));
@@ -52,14 +53,28 @@ void loop() {
   } else {
     Serial.println("Failed to send data");
   }
+
+  radio.powerDown();
+
+  Serial.println("Sleeping for 64 sec");
+  Serial.flush();
+  for (int i = 0; i < 8; i++) {
+    LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  }
   
 }
 
+void requestTemperature(){
+  sensors.begin();
+  sensors.requestTemperatures();
+  data.value = sensors.getTempCByIndex(0);
+}
+
 void restartRadio() {
-  Serial.println("Restarting radio...");
-  radio.begin(); // Start up the radio
+  Serial.println("Restarting radio");
+  radio.begin();
   network.begin(mChannel, thisNode);
-  network.update(); // always be pumping the network
+  network.update();
   Serial.print("Is radio properly connected = ");
   Serial.println(radio.isChipConnected());
 }
