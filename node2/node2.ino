@@ -15,15 +15,16 @@ DallasTemperature sensors(&oneWire);
 RF24 radio(9, 10); // CE/CSN pins
 RF24Network network(radio); 
 const uint16_t mChannel = 90;
-const uint16_t thisNode = 1;
+const uint16_t thisNode = 2;
 const uint16_t gatewayNode = 0;
 
 struct dataStruct{
   uint16_t measurementTypeId = 4;
-  uint16_t stationId = 3;
-  char secretId[36] = "a0e1ef6f-affd-40f8-906c-604b1afa3529";
+  uint16_t stationId = 3813;
+  char secretId[36] = "85252073-be1e-44d5-b26a-7c9d3d699eec";
   float value;
 }data;
+
 
 void setup() {
   Serial.begin(115200);
